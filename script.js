@@ -9,10 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusMessage = document.getElementById('status-message');
     const checkSolutionBtn = document.getElementById('check-solution-btn');
     const resetBtn = document.getElementById('reset-btn');
-    const revealBtn = document.getElementById('reveal-btn');
     const victoryModal = document.getElementById('victory-modal');
     const revealedPokemon = document.getElementById('revealed-pokemon');
     const playAgainBtn = document.getElementById('play-again-btn');
+    const coordTooltip = document.getElementById('coordinate-tooltip');
     
     // Game state
     let currentSprite = null;
@@ -90,11 +90,27 @@ document.addEventListener('DOMContentLoaded', () => {
     generateBtn.addEventListener('click', startNewGame);
     checkSolutionBtn.addEventListener('click', checkSolution);
     resetBtn.addEventListener('click', resetPuzzle);
-    revealBtn.addEventListener('click', revealSolution);
     playAgainBtn.addEventListener('click', () => {
         victoryModal.classList.remove('active');
         resetPuzzle();
     });
+    
+    // Coordinate tooltip functionality
+    function showTooltip(x, y) {
+        const colLetter = String.fromCharCode(65 + parseInt(x));
+        const rowNumber = parseInt(y) + 1;
+        coordTooltip.textContent = `${colLetter}${rowNumber}`;
+        coordTooltip.style.opacity = '1';
+    }
+    
+    function hideTooltip() {
+        coordTooltip.style.opacity = '0';
+    }
+    
+    function moveTooltip(event) {
+        coordTooltip.style.left = (event.clientX + 10) + 'px';
+        coordTooltip.style.top = (event.clientY + 10) + 'px';
+    }
     
     // Start a new game
     async function startNewGame() {
@@ -107,7 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Enable game buttons
         checkSolutionBtn.disabled = false;
         resetBtn.disabled = false;
-        revealBtn.disabled = false;
         
         try {
             // Load the sprite image
@@ -177,22 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set the grid template for the main grid (8x8)
         puzzleGrid.style.gridTemplateColumns = `repeat(${gridDimension}, 1fr)`;
         
-        // Column headers (A-H for an 8x8 grid)
-        for (let x = 0; x < gridDimension; x++) {
-            const colHeader = document.createElement('div');
-            colHeader.className = 'coordinate-label col-label';
-            colHeader.textContent = String.fromCharCode(65 + x); // A, B, C, D, E, F, G, H
-            puzzleGrid.appendChild(colHeader);
-        }
-        
         // Create the grid cells
         for (let y = 0; y < gridDimension; y++) {
-            // Row header (1-8)
-            const rowHeader = document.createElement('div');
-            rowHeader.className = 'coordinate-label row-label';
-            rowHeader.textContent = (y + 1).toString();
-            puzzleGrid.appendChild(rowHeader);
-            
             for (let x = 0; x < gridDimension; x++) {
                 const cell = document.createElement('div');
                 cell.className = 'grid-cell';
@@ -204,6 +205,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (y % 2 === 0) cell.classList.add('top-edge');
                 if (x % 2 === 1) cell.classList.add('right-edge');
                 if (y % 2 === 1) cell.classList.add('bottom-edge');
+                
+                // Add hover effects to show coordinates
+                cell.addEventListener('mouseenter', (e) => {
+                    showTooltip(x, y);
+                    moveTooltip(e);
+                });
+                
+                cell.addEventListener('mousemove', (e) => {
+                    moveTooltip(e);
+                });
+                
+                cell.addEventListener('mouseleave', () => {
+                    hideTooltip();
+                });
                 
                 // Add click event for placing pieces
                 cell.addEventListener('click', () => {
@@ -276,10 +291,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const oy = originalPos.y;
             const isEmpty = emptyPieces.has(`${ox},${oy}`);
             
+            // Skip empty pieces - we don't need to place them
+            if (isEmpty) continue;
+            
             // Create piece container
             const pieceContainer = document.createElement('div');
             pieceContainer.className = 'puzzle-piece';
-            if (isEmpty) pieceContainer.classList.add('empty-piece');
             pieceContainer.dataset.originalX = ox;
             pieceContainer.dataset.originalY = oy;
             pieceContainer.dataset.isEmpty = isEmpty;
@@ -402,34 +419,44 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkSolution() {
         if (!gameActive) return;
         
-        let correct = true;
+        let correct = 0;
         let placedPieces = 0;
-        const totalPieces = gridDimension * gridDimension;
+        let totalNonEmptyPieces = 0;
         
-        // Count how many pieces are placed and check if they're in the right position
+        // First, count the total number of non-empty pieces
         for (let y = 0; y < gridDimension; y++) {
             for (let x = 0; x < gridDimension; x++) {
-                // Check if this position has a piece
-                if (userGrid[y][x]) {
-                    placedPieces++;
-                    
-                    // Empty pieces can go anywhere that should be empty
-                    if (userGrid[y][x].isEmpty) {
-                        if (!isEmptyPiece(x, y)) {
-                            correct = false;
-                        }
-                    }
-                    // Non-empty pieces need to be in the correct position
-                    else if (userGrid[y][x].originalX !== x || userGrid[y][x].originalY !== y) {
-                        correct = false;
-                    }
-                } else {
-                    correct = false;
+                if (!isEmptyPiece(x, y)) {
+                    totalNonEmptyPieces++;
                 }
             }
         }
         
-        if (correct && placedPieces === totalPieces) {
+        // Count how many pieces are placed and check if they're in the right position
+        for (let y = 0; y < gridDimension; y++) {
+            for (let x = 0; x < gridDimension; x++) {
+                // Skip empty pieces - they don't count toward completion
+                if (isEmptyPiece(x, y)) {
+                    continue;
+                }
+                
+                // Check if this position has a piece
+                if (userGrid[y][x]) {
+                    placedPieces++;
+                    
+                    // Check if the piece is in the correct position
+                    if (userGrid[y][x].originalX === x && userGrid[y][x].originalY === y) {
+                        correct++;
+                    }
+                }
+            }
+        }
+        
+        // Calculate completion percentage based on non-empty pieces
+        const percentComplete = Math.round((correct / totalNonEmptyPieces) * 100);
+        
+        // Check if completion meets the 70% threshold
+        if (percentComplete >= 70) {
             // Success! Puzzle solved
             gameActive = false;
             
@@ -450,8 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
             originalSprite.classList.remove('hidden');
         } else {
             // Not correct yet
-            const percentComplete = Math.round((placedPieces / totalPieces) * 100);
-            statusMessage.textContent = `Not quite right. You've placed ${placedPieces} out of ${totalPieces} pieces (${percentComplete}%). Keep trying!`;
+            statusMessage.textContent = `Not quite right. You've correctly placed ${correct} out of ${totalNonEmptyPieces} non-empty pieces (${percentComplete}%). Keep trying!`;
         }
     }
     
@@ -474,33 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         statusMessage.textContent = `Puzzle reset. Who's that Pokémon?`;
-    }
-    
-    // Reveal the solution
-    function revealSolution() {
-        if (!gameActive) return;
-        
-        gameActive = false;
-        
-        // Place all pieces in their correct positions
-        for (let y = 0; y < gridDimension; y++) {
-            for (let x = 0; x < gridDimension; x++) {
-                userGrid[y][x] = {
-                    originalX: x,
-                    originalY: y,
-                    isEmpty: emptyPieces.has(`${x},${y}`)
-                };
-            }
-        }
-        
-        // Update the visual grid
-        updateGridDisplay();
-        
-        // Show the original sprite
-        originalSprite.classList.remove('hidden');
-        
-        // Update status message - don't reveal Pokemon's name
-        statusMessage.textContent = `Solution revealed!`;
     }
     
     // Helper function to capitalize the first letter of a string
