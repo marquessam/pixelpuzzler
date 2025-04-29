@@ -244,6 +244,17 @@ button:disabled {
     opacity: 0.4;
 }
 
+.secret-code-message {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #e63946;
+    margin-top: 10px;
+    padding: 10px;
+    border: 2px dashed #a8dadc;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+}
+
 /* Modal styles */
 .modal {
     display: none;
