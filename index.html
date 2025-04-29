@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Pencil Puzzle Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Pokémon Pencil Puzzle Generator</h1>
+        
+        <div class="controls">
+            <label for="sprite-select">Select a Pokémon:</label>
+            <select id="sprite-select">
+                <option value="pikachu">Pikachu</option>
+                <!-- Add more Pokémon options as you add sprites -->
+            </select>
+            <button id="generate-btn">Generate Puzzle</button>
+        </div>
+        
+        <div class="display-area">
+            <div class="original-sprite">
+                <h2>Original Sprite</h2>
+                <div id="sprite-container">
+                    <img id="selected-sprite" src="sprites/pikachu.png" alt="Pokémon Sprite">
+                </div>
+            </div>
+            
+            <div class="puzzle-display">
+                <h2>Pencil Puzzle</h2>
+                <div id="puzzle-grid-container">
+                    <div id="puzzle-grid"></div>
+                    <div id="puzzle-pieces"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
