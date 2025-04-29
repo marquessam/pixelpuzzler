@@ -177,40 +177,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set the grid template for the main grid (8x8)
         puzzleGrid.style.gridTemplateColumns = `repeat(${gridDimension}, 1fr)`;
         
-        // Create a separate container for coordinate labels
-        const gridContainer = document.createElement('div');
-        gridContainer.className = 'grid-with-coordinates';
-        puzzleGrid.appendChild(gridContainer);
-        
-        // Add coordinate headers (A-H) at the top
-        const topHeaderRow = document.createElement('div');
-        topHeaderRow.className = 'coordinate-header-row';
-        gridContainer.appendChild(topHeaderRow);
-        
-        // Empty corner cell
-        const cornerCell = document.createElement('div');
-        cornerCell.className = 'corner-cell';
-        topHeaderRow.appendChild(cornerCell);
-        
         // Column headers (A-H for an 8x8 grid)
         for (let x = 0; x < gridDimension; x++) {
             const colHeader = document.createElement('div');
-            colHeader.className = 'coordinate-header col-header';
+            colHeader.className = 'coordinate-label col-label';
             colHeader.textContent = String.fromCharCode(65 + x); // A, B, C, D, E, F, G, H
-            topHeaderRow.appendChild(colHeader);
+            puzzleGrid.appendChild(colHeader);
         }
         
-        // Create the grid cells with row headers
+        // Create the grid cells
         for (let y = 0; y < gridDimension; y++) {
-            const gridRow = document.createElement('div');
-            gridRow.className = 'grid-row';
-            gridContainer.appendChild(gridRow);
-            
             // Row header (1-8)
             const rowHeader = document.createElement('div');
-            rowHeader.className = 'coordinate-header row-header';
+            rowHeader.className = 'coordinate-label row-label';
             rowHeader.textContent = (y + 1).toString();
-            gridRow.appendChild(rowHeader);
+            puzzleGrid.appendChild(rowHeader);
             
             for (let x = 0; x < gridDimension; x++) {
                 const cell = document.createElement('div');
@@ -238,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
                 
-                gridRow.appendChild(cell);
+                puzzleGrid.appendChild(cell);
             }
         }
     }
