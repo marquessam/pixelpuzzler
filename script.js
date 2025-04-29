@@ -19,8 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let originalPixels = [];
     let gameActive = false;
     let selectedPiece = null;
-    let pieceSize = 4; // Size of each puzzle piece (4x4)
-    let gridSize = 8;  // Full grid size (8x8)
+    
+    // Sprite and puzzle dimensions
+    const spriteSize = 64;            // Full sprite size (64x64 pixels)
+    const gridDimension = 4;          // Grid is 4x4 (16 squares)
+    const pieceSize = spriteSize / gridDimension; // Each piece is 16x16 pixels
+    
     let userGrid = [];
     let currentPokemon = '';
     
@@ -67,23 +71,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Set canvas size to match grid
-            canvas.width = gridSize;
-            canvas.height = gridSize;
+            // Set canvas size to match sprite size
+            canvas.width = spriteSize;
+            canvas.height = spriteSize;
             
-            // Draw the sprite scaled to fit our grid
-            ctx.drawImage(currentSprite, 0, 0, gridSize, gridSize);
+            // Draw the sprite
+            ctx.drawImage(currentSprite, 0, 0, spriteSize, spriteSize);
             
             // Get pixel data
-            const imageData = ctx.getImageData(0, 0, gridSize, gridSize);
+            const imageData = ctx.getImageData(0, 0, spriteSize, spriteSize);
             const pixelData = imageData.data;
             
             // Store original pixels
             originalPixels = [];
-            for (let y = 0; y < gridSize; y++) {
+            for (let y = 0; y < spriteSize; y++) {
                 const row = [];
-                for (let x = 0; x < gridSize; x++) {
-                    const pixelIndex = (y * gridSize + x) * 4;
+                for (let x = 0; x < spriteSize; x++) {
+                    const pixelIndex = (y * spriteSize + x) * 4;
                     const r = pixelData[pixelIndex];
                     const g = pixelData[pixelIndex + 1];
                     const b = pixelData[pixelIndex + 2];
@@ -96,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Initialize empty user grid
-            userGrid = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+            userGrid = Array(gridDimension).fill().map(() => Array(gridDimension).fill(null));
             
             // Render the empty puzzle grid
             renderPuzzleGrid();
@@ -124,51 +128,42 @@ document.addEventListener('DOMContentLoaded', () => {
         puzzleGrid.innerHTML = '';
         
         // Set the grid template
-        puzzleGrid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+        puzzleGrid.style.gridTemplateColumns = `repeat(${gridDimension}, 1fr)`;
         
-        // Column headers (A-H)
-        for (let x = 0; x < gridSize; x++) {
+        // Column headers (A-D for a 4x4 grid)
+        for (let x = 0; x < gridDimension; x++) {
             const colHeader = document.createElement('div');
             colHeader.className = 'coordinate-label col-label';
-            colHeader.textContent = String.fromCharCode(65 + x); // A, B, C, etc.
+            colHeader.textContent = String.fromCharCode(65 + x); // A, B, C, D
             puzzleGrid.appendChild(colHeader);
         }
         
         // Create the grid cells
-        for (let y = 0; y < gridSize; y++) {
-            // Row header (1-8)
+        for (let y = 0; y < gridDimension; y++) {
+            // Row header (1-4)
             const rowHeader = document.createElement('div');
             rowHeader.className = 'coordinate-label row-label';
             rowHeader.textContent = (y + 1).toString();
             puzzleGrid.appendChild(rowHeader);
             
-            for (let x = 0; x < gridSize; x++) {
+            for (let x = 0; x < gridDimension; x++) {
                 const cell = document.createElement('div');
                 cell.className = 'grid-cell';
                 cell.dataset.x = x;
                 cell.dataset.y = y;
                 
-                // Add the region identifier based on which piece this cell belongs to
-                const regionX = Math.floor(x / pieceSize);
-                const regionY = Math.floor(y / pieceSize);
-                cell.dataset.region = `${regionX}-${regionY}`;
-                
-                // Add a border to show the piece boundaries
-                if (x % pieceSize === 0) cell.classList.add('left-edge');
-                if (y % pieceSize === 0) cell.classList.add('top-edge');
-                if (x % pieceSize === pieceSize - 1) cell.classList.add('right-edge');
-                if (y % pieceSize === pieceSize - 1) cell.classList.add('bottom-edge');
+                // Add borders to show grid regions
+                if (x > 0) cell.classList.add('left-edge');
+                if (y > 0) cell.classList.add('top-edge');
+                if (x < gridDimension - 1) cell.classList.add('right-edge');
+                if (y < gridDimension - 1) cell.classList.add('bottom-edge');
                 
                 // Add click event for placing pieces
                 cell.addEventListener('click', () => {
                     if (!gameActive || !selectedPiece) return;
                     
-                    const regionX = Math.floor(x / pieceSize);
-                    const regionY = Math.floor(y / pieceSize);
-                    const region = `${regionX}-${regionY}`;
-                    
                     // Place the selected piece in this region
-                    placePiece(region, selectedPiece.dataset.originalRegion);
+                    placePiece(x, y, selectedPiece.dataset.originalX, selectedPiece.dataset.originalY);
                     
                     // Deselect the piece
                     if (selectedPiece) {
@@ -186,30 +181,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear previous pieces
         puzzlePieces.innerHTML = '';
         
-        // Calculate how many pieces we'll have (2x2 grid of pieces)
-        const piecesPerRow = gridSize / pieceSize;
-        const totalPieces = piecesPerRow * piecesPerRow;
-        
-        // Create an array of piece regions
-        const regions = [];
-        for (let y = 0; y < piecesPerRow; y++) {
-            for (let x = 0; x < piecesPerRow; x++) {
-                regions.push(`${x}-${y}`);
+        // Create an array of piece positions
+        const positions = [];
+        for (let y = 0; y < gridDimension; y++) {
+            for (let x = 0; x < gridDimension; x++) {
+                positions.push({x, y});
             }
         }
         
-        // Shuffle the regions for randomness
-        const shuffledRegions = [...regions].sort(() => Math.random() - 0.5);
+        // Shuffle the positions for randomness
+        const shuffledPositions = [...positions].sort(() => Math.random() - 0.5);
         
-        // Create a puzzle piece for each region
-        for (let i = 0; i < totalPieces; i++) {
-            const originalRegion = regions[i];
-            const [ox, oy] = originalRegion.split('-').map(Number);
+        // Create a puzzle piece for each position
+        for (let i = 0; i < positions.length; i++) {
+            const originalPos = positions[i];
+            const ox = originalPos.x;
+            const oy = originalPos.y;
             
             // Create piece container
             const pieceContainer = document.createElement('div');
             pieceContainer.className = 'puzzle-piece';
-            pieceContainer.dataset.originalRegion = originalRegion;
+            pieceContainer.dataset.originalX = ox;
+            pieceContainer.dataset.originalY = oy;
             
             // Create canvas for this piece
             const canvas = document.createElement('canvas');
@@ -224,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const x = ox * pieceSize + px;
                     const y = oy * pieceSize + py;
                     
-                    if (x < gridSize && y < gridSize) {
+                    if (x < spriteSize && y < spriteSize) {
                         const pixel = originalPixels[y][x];
                         ctx.fillStyle = `rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a / 255})`;
                         ctx.fillRect(px, py, 1, 1);
@@ -239,18 +232,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const label = document.createElement('div');
             label.className = 'piece-label';
             
-            // Calculate coordinates based on original region
+            // Calculate coordinates based on original position
             const startX = ox * pieceSize;
             const startY = oy * pieceSize;
-            const endX = Math.min(startX + pieceSize - 1, gridSize - 1);
-            const endY = Math.min(startY + pieceSize - 1, gridSize - 1);
+            const endX = startX + pieceSize - 1;
+            const endY = startY + pieceSize - 1;
             
-            const startCol = String.fromCharCode(65 + startX);
-            const endCol = String.fromCharCode(65 + endX);
-            const startRow = startY + 1;
-            const endRow = endY + 1;
+            // Convert to letter-number format (e.g., A1-B2)
+            const startCol = String.fromCharCode(65 + Math.floor(startX / pieceSize));
+            const startRow = Math.floor(startY / pieceSize) + 1;
+            label.textContent = `${startCol}${startRow}`;
             
-            label.textContent = `${startCol}${startRow}-${endCol}${endRow}`;
             pieceContainer.appendChild(label);
             
             // Add click event to select this piece
@@ -276,24 +268,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Place a puzzle piece in the grid
-    function placePiece(gridRegion, originalRegion) {
-        const [gridX, gridY] = gridRegion.split('-').map(Number);
-        const [originalX, originalY] = originalRegion.split('-').map(Number);
-        
+    function placePiece(gridX, gridY, originalX, originalY) {
         // Update the user grid
-        for (let y = 0; y < pieceSize; y++) {
-            for (let x = 0; x < pieceSize; x++) {
-                const targetX = gridX * pieceSize + x;
-                const targetY = gridY * pieceSize + y;
-                const sourceX = originalX * pieceSize + x;
-                const sourceY = originalY * pieceSize + y;
-                
-                if (targetX < gridSize && targetY < gridSize && 
-                    sourceX < gridSize && sourceY < gridSize) {
-                    userGrid[targetY][targetX] = originalRegion;
-                }
-            }
-        }
+        userGrid[gridY][gridX] = {
+            originalX: parseInt(originalX),
+            originalY: parseInt(originalY)
+        };
         
         // Update the visual grid
         updateGridDisplay();
@@ -301,34 +281,41 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Update the grid display based on the user's current solution
     function updateGridDisplay() {
-        for (let y = 0; y < gridSize; y++) {
-            for (let x = 0; x < gridSize; x++) {
+        for (let y = 0; y < gridDimension; y++) {
+            for (let x = 0; x < gridDimension; x++) {
                 const cell = document.querySelector(`.grid-cell[data-x="${x}"][data-y="${y}"]`);
                 if (!cell) continue;
                 
-                // Clear existing style
-                cell.style.backgroundColor = '';
+                // Clear existing content
+                cell.innerHTML = '';
                 
                 // Check if this cell has been assigned a piece
                 if (userGrid[y][x]) {
-                    const [originalX, originalY] = userGrid[y][x].split('-').map(Number);
-                    const originalPieceX = originalX * pieceSize;
-                    const originalPieceY = originalY * pieceSize;
+                    const originalX = userGrid[y][x].originalX;
+                    const originalY = userGrid[y][x].originalY;
                     
-                    // Calculate the position within the piece
-                    const pieceOffsetX = x % pieceSize;
-                    const pieceOffsetY = y % pieceSize;
+                    // Create a canvas for this cell
+                    const canvas = document.createElement('canvas');
+                    canvas.width = pieceSize;
+                    canvas.height = pieceSize;
+                    canvas.className = 'cell-canvas';
+                    const ctx = canvas.getContext('2d');
                     
-                    // Get the original pixel at this position
-                    const originalX2 = originalPieceX + pieceOffsetX;
-                    const originalY2 = originalPieceY + pieceOffsetY;
-                    
-                    if (originalX2 < gridSize && originalY2 < gridSize) {
-                        const pixel = originalPixels[originalY2][originalX2];
-                        if (pixel.a > 0) {
-                            cell.style.backgroundColor = `rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a / 255})`;
+                    // Draw the piece from original pixels
+                    for (let py = 0; py < pieceSize; py++) {
+                        for (let px = 0; px < pieceSize; px++) {
+                            const srcX = originalX * pieceSize + px;
+                            const srcY = originalY * pieceSize + py;
+                            
+                            if (srcX < spriteSize && srcY < spriteSize) {
+                                const pixel = originalPixels[srcY][srcX];
+                                ctx.fillStyle = `rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a / 255})`;
+                                ctx.fillRect(px, py, 1, 1);
+                            }
                         }
                     }
+                    
+                    cell.appendChild(canvas);
                 }
             }
         }
@@ -340,38 +327,20 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let correct = true;
         let placedPieces = 0;
-        const totalPieces = (gridSize / pieceSize) * (gridSize / pieceSize);
+        const totalPieces = gridDimension * gridDimension;
         
-        // Count how many pieces are placed
-        const placedRegions = new Set();
-        for (let y = 0; y < gridSize; y++) {
-            for (let x = 0; x < gridSize; x++) {
+        // Count how many pieces are placed and check if they're in the right position
+        for (let y = 0; y < gridDimension; y++) {
+            for (let x = 0; x < gridDimension; x++) {
+                // Check if this position has a piece
                 if (userGrid[y][x]) {
-                    const regionX = Math.floor(x / pieceSize);
-                    const regionY = Math.floor(y / pieceSize);
-                    const region = `${regionX}-${regionY}`;
-                    placedRegions.add(region);
-                }
-            }
-        }
-        
-        placedPieces = placedRegions.size;
-        
-        // Check if all pieces are in the correct position
-        for (let y = 0; y < gridSize; y += pieceSize) {
-            for (let x = 0; x < gridSize; x += pieceSize) {
-                const regionX = x / pieceSize;
-                const regionY = y / pieceSize;
-                const expectedRegion = `${regionX}-${regionY}`;
-                
-                // Check if this region has a piece placed
-                if (!userGrid[y][x]) {
-                    correct = false;
-                    continue;
-                }
-                
-                // Check if the piece is in the correct position
-                if (userGrid[y][x] !== expectedRegion) {
+                    placedPieces++;
+                    
+                    // Check if the piece is in the correct position
+                    if (userGrid[y][x].originalX !== x || userGrid[y][x].originalY !== y) {
+                        correct = false;
+                    }
+                } else {
                     correct = false;
                 }
             }
@@ -397,10 +366,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Reset the puzzle
     function resetPuzzle() {
-        if (!gameActive) return;
+        if (!gameActive && !confirm("Start a new game?")) return;
+        
+        gameActive = true;
         
         // Reset user grid
-        userGrid = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+        userGrid = Array(gridDimension).fill().map(() => Array(gridDimension).fill(null));
         
         // Clear the grid display
         updateGridDisplay();
@@ -421,12 +392,17 @@ document.addEventListener('DOMContentLoaded', () => {
         gameActive = false;
         
         // Place all pieces in their correct positions
-        for (let y = 0; y < gridSize / pieceSize; y++) {
-            for (let x = 0; x < gridSize / pieceSize; x++) {
-                const region = `${x}-${y}`;
-                placePiece(region, region);
+        for (let y = 0; y < gridDimension; y++) {
+            for (let x = 0; x < gridDimension; x++) {
+                userGrid[y][x] = {
+                    originalX: x,
+                    originalY: y
+                };
             }
         }
+        
+        // Update the visual grid
+        updateGridDisplay();
         
         // Show the original sprite
         originalSprite.classList.remove('hidden');
