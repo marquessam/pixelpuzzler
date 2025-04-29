@@ -142,19 +142,29 @@ button:disabled {
     border: 1px solid #ddd;
     position: relative;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s;
 }
 
 .grid-cell:hover {
-    background-color: #f0f0f0;
+    transform: scale(1.05);
+    z-index: 5;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
-.grid-cell.filled {
-    background-color: #000;
+.grid-cell.left-edge {
+    border-left: 2px solid #333;
 }
 
-.grid-cell.filled:hover {
-    background-color: #333;
+.grid-cell.right-edge {
+    border-right: 2px solid #333;
+}
+
+.grid-cell.top-edge {
+    border-top: 2px solid #333;
+}
+
+.grid-cell.bottom-edge {
+    border-bottom: 2px solid #333;
 }
 
 .coordinate-label {
@@ -181,44 +191,44 @@ button:disabled {
 
 #puzzle-pieces {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
 }
 
 .puzzle-piece {
     background-color: white;
-    border: 1px solid #ddd;
-    padding: 5px;
+    border: 2px solid #ddd;
+    padding: 8px;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 5px;
 }
 
 .puzzle-piece:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
 }
 
-.piece-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
+.puzzle-piece.selected {
+    border-color: #e63946;
+    box-shadow: 0 0 10px rgba(230, 57, 70, 0.4);
+    transform: translateY(-3px);
 }
 
-.piece-cell {
+.piece-canvas {
+    width: 100%;
     aspect-ratio: 1;
-    background-color: white;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
     border: 1px solid #eee;
-}
-
-.piece-cell.filled {
-    background-color: #000;
 }
 
 .piece-label {
     text-align: center;
-    font-size: 10px;
-    margin-top: 3px;
+    font-size: 11px;
+    margin-top: 5px;
     color: #666;
+    font-weight: bold;
 }
 
 /* Modal styles */
