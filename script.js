@@ -38,9 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
         geodude: 'R',
         haunter: 'O',
         koffing: 'N',
-        magikarp: ' ',
-        mew: 'N',
-        squirtle: 'E',
+        magikarp: 'N',
+        mew: 'E',
+        squirtle: 'S',
         // For the S, we'll use a duplicate character from above
         // or you can add one more sprite if needed
     };
