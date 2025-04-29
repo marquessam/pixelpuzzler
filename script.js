@@ -29,11 +29,56 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPokemon = '';
     let emptyPieces = new Set(); // Keep track of empty pieces
     
+    // Secret code mapping - each sprite is assigned a character from "COCORON NES"
+    const secretCodeMap = {
+        pikachu: 'C',
+        bulbasaur: 'O',
+        charmander: 'C',
+        clefairy: 'O',
+        geodude: 'R',
+        haunter: 'O',
+        koffing: 'N',
+        magikarp: ' ',
+        mew: 'N',
+        squirtle: 'E',
+        // For the S, we'll use a duplicate character from above
+        // or you can add one more sprite if needed
+    };
+    
     // Pokemon sprite mappings - add more as you get sprites
     const spriteMap = {
-        pikachu: 'sprites/pikachu.png'
-        // Add more sprites here as you collect them
+        pikachu: 'sprites/pikachu.png',
+        bulbasaur: 'sprites/bulbasaur.png',
+        charmander: 'sprites/charmander.png',
+        clefairy: 'sprites/clefairy.png',
+        geodude: 'sprites/geodude.png',
+        haunter: 'sprites/haunter.png',
+        koffing: 'sprites/koffing.png',
+        magikarp: 'sprites/magikarp.png',
+        mew: 'sprites/mew.png',
+        squirtle: 'sprites/squirtle.png'
     };
+    
+    // Initialize the sprite selection dropdown with randomized order
+    function populateSpriteDropdown() {
+        // Clear existing options
+        spriteSelect.innerHTML = '';
+        
+        // Get all sprite keys and shuffle them
+        const spriteKeys = Object.keys(spriteMap);
+        const shuffledKeys = [...spriteKeys].sort(() => Math.random() - 0.5);
+        
+        // Add options with generic names
+        shuffledKeys.forEach((key, index) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = `Puzzle #${index + 1}`;
+            spriteSelect.appendChild(option);
+        });
+    }
+    
+    // Call this on page load to set up the dropdown
+    populateSpriteDropdown();
     
     // Update sprite when selection changes
     spriteSelect.addEventListener('change', () => {
@@ -388,8 +433,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Success! Puzzle solved
             gameActive = false;
             
+            // Get the secret code character for this sprite
+            const secretChar = secretCodeMap[currentPokemon] || '?';
+            
             // Show victory modal
             revealedPokemon.innerHTML = `<img src="${spriteMap[currentPokemon]}" alt="${currentPokemon}">`;
+            const secretCodeMessage = document.createElement('p');
+            secretCodeMessage.className = 'secret-code-message';
+            secretCodeMessage.textContent = `Excellent, you completed it! You achieved rank "${secretChar}"`;
+            revealedPokemon.appendChild(secretCodeMessage);
+            
             victoryModal.classList.add('active');
             
             // Update status message - don't reveal Pokemon's name
