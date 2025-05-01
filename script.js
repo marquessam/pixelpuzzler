@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         geodude: 'R',
         haunter: 'O',
         koffing: 'N',
-        magikarp: ' ',
+        magikarp: 'S',
         mew: 'N',
         squirtle: 'E',
         // For the S, we'll use a duplicate character from above
